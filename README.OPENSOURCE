@@ -1,0 +1,10 @@
+[
+    {javascript:;
+        "Name": "WaveLoading",
+        "License": " Apache License, Version 2.0 ",
+        "License File": " LICENSE ",
+        "Version Number": " v1.1.0",
+        "Upstream URL": "https://github.com/race604/WaveLoading",
+        "Description": "This library provides a wave loading animation as a Drawable.."
+    }
+]
