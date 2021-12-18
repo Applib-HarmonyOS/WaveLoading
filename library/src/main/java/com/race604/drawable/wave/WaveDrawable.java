@@ -1,11 +1,17 @@
 package com.race604.drawable.wave;
 
+import com.race604.drawable.utils.LogUtil;
 import ohos.agp.animation.AnimatorValue;
 import ohos.agp.components.Component;
-import ohos.agp.components.Image;
 import ohos.agp.components.element.Element;
 import ohos.agp.components.element.PixelMapElement;
-import ohos.agp.render.*;
+import ohos.agp.render.BlendMode;
+import ohos.agp.render.Canvas;
+import ohos.agp.render.ColorMatrix;
+import ohos.agp.render.Paint;
+import ohos.agp.render.Path;
+import ohos.agp.render.PixelMapHolder;
+import ohos.agp.render.Texture;
 import ohos.agp.utils.Color;
 import ohos.agp.utils.Matrix;
 import ohos.agp.utils.Rect;
@@ -13,16 +19,16 @@ import ohos.agp.utils.RectFloat;
 import ohos.app.Context;
 import ohos.media.image.PixelMap;
 import ohos.media.image.common.PixelFormat;
+import ohos.media.image.common.Size;
 
-import static com.race604.drawable.wave.utils.ResUtil.createByResourceId;
+import static com.race604.drawable.utils.ResUtil.createByResourceId;
 import static ohos.agp.animation.Animator.CurveType.DECELERATE;
-import static ohos.agp.animation.Animator.CurveType.LINEAR;
 
 /**
  * Created by jing on 16-12-6.
  */
-public class WaveDrawable extends PixelMapElement implements Animatable, AnimatorValue.ValueUpdateListener, Element.OnChangeListener, Component.DrawTask {
 
+public class WaveDrawable extends PixelMapElement implements Animatable, AnimatorValue.ValueUpdateListener, Element.OnChangeListener, Component.DrawTask {
     private static final String TAG = WaveDrawable.class.getSimpleName();
     private static final float WAVE_HEIGHT_FACTOR = 0.2f;
     private static final float WAVE_SPEED_FACTOR = 0.02f;
@@ -40,42 +46,44 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
     private Paint mPaint;
     private PixelMap mMask;
     private int mLevel = 0;
-    private final Matrix mMatrix = new Matrix();
     private boolean mRunning = false;
     private boolean mIndeterminate = false;
     private Component mComponent;
 
-    private static final ColorMatrix sGrayFilter = new ColorMatrix(new float[]{
+    private static ColorMatrix sGrayFilter = new ColorMatrix(new float[]{
             0.264F, 0.472F, 0.088F, 0, 0,
             0.264F, 0.472F, 0.088F, 0, 0,
             0.264F, 0.472F, 0.088F, 0, 0,
-            0, 0, 0, 1, 0
+            0,      0,      0,      1, 0
     });
     private ColorMatrix mCurFilter = null;
 
-    public WaveDrawable(Element drawable, Component component) {
-        super(getPixelMap(drawable));
-        mDrawable = drawable;
-        setComponent(component);
+    public WaveDrawable(PixelMap pixelmap) {
+        super(pixelmap);
+        mDrawable = new PixelMapElement(pixelmap);
         init();
     }
 
-    private static PixelMap getPixelMap(Element drawableelement) {
+    public WaveDrawable(Context context, int imgRes) {
+        super(createByResourceId(context, imgRes));
+        mDrawable = new PixelMapElement(getPixelMap());
+        init();
+    }
+
+    public WaveDrawable(Element drawable) {
+        super(createPixelMap(drawable));
+        mDrawable = drawable;
+        init();
+    }
+
+    private static PixelMap createPixelMap(Element element) {
         PixelMap.InitializationOptions pi = new PixelMap.InitializationOptions();
         pi.pixelFormat = PixelFormat.ARGB_8888;
-        pi.size = new ohos.media.image.common.Size(drawableelement.getWidth(), drawableelement.getHeight());
+        pi.size = new Size(element.getWidth(), element.getHeight());
         return PixelMap.create(pi);
     }
 
-    public WaveDrawable(Context context, int imgRes , Component component) {
-        super(createByResourceId(context, imgRes));
-        mDrawable = new PixelMapElement(createByResourceId(context, imgRes));
-        setComponent(component);
-        init();
-    }
-
     private void init() {
-        mMatrix.reset();
         mPaint = new Paint();
         mPaint.setFilterBitmap(false);
         mPaint.setColor(Color.BLACK);
@@ -90,14 +98,12 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
             mWaveStep = Math.max(1, (int) (mWidth * WAVE_SPEED_FACTOR));
             updateMask(mWidth, mWaveLength, mWaveHeight);
         }
-
         setProgress(0);
         start();
     }
 
     /**
      * Set wave move distance (in pixels) in very animation frame
-     *
      * @param step distance in pixels
      */
     public void setWaveSpeed(int step) {
@@ -106,7 +112,6 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
 
     /**
      * Set wave amplitude (in pixels)
-     *
      * @param amplitude
      */
     public void setWaveAmplitude(int amplitude) {
@@ -121,7 +126,6 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
 
     /**
      * Set wave length (in pixels)
-     *
      * @param length
      */
     public void setWaveLength(int length) {
@@ -135,7 +139,6 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
 
     /**
      * Set the wave loading in indeterminate mode or not
-     *
      * @param indeterminate
      */
     public void setIndeterminate(boolean indeterminate) {
@@ -164,7 +167,6 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
 
     /**
      * Set customised animator for wave loading animation
-     *
      * @param animator
      */
     public void setIndeterminateAnimator(AnimatorValue animator) {
@@ -187,6 +189,7 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
     public void setBounds(int left, int top, int right, int bottom) {
         super.setBounds(left, top, right, bottom);
         mDrawable.setBounds(left, top, right, bottom);
+        updateBounds(new Rect(left, top, right, bottom));
     }
 
     private void updateBounds(Rect bounds) {
@@ -194,7 +197,8 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
             return;
         }
 
-        if (mWidth < 0 || mHeight < 0) {
+        if (mWidth > 0 || mHeight > 0) {
+            mWaveLength = mWidth;
             mWidth = bounds.getWidth();
             mHeight = bounds.getHeight();
             if (mWaveHeight == UNDEFINED_VALUE) {
@@ -208,14 +212,12 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
             if (mWaveStep == UNDEFINED_VALUE) {
                 mWaveStep = Math.max(1, (int) (mWidth * WAVE_SPEED_FACTOR));
             }
-
             updateMask(mWidth, mWaveLength, mWaveHeight);
         }
     }
 
     @Override
     public void drawToCanvas(Canvas canvas) {
-        LogUtil.debug("drawtocanvas canvas", "start");
         mDrawable.setColorMatrix(sGrayFilter);
         mDrawable.drawToCanvas(canvas);
         mDrawable.setColorMatrix(null);
@@ -224,7 +226,7 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
             return;
         }
 
-        int sc = canvas.saveLayer(new RectFloat(0, 0, mWidth, mHeight), new Paint());//,
+        int sc = canvas.saveLayer(new RectFloat(0, 0, mWidth, mHeight), new Paint());
 
         if (mWaveLevel > 0) {
             canvas.clipRect(0, mWaveLevel, mWidth, mHeight);
@@ -232,6 +234,9 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
 
         mDrawable.drawToCanvas(canvas);
 
+        if (mProgress >= 0.999f) {
+            return;
+        }
 
         mWaveOffset += mWaveStep;
         if (mWaveOffset > mWaveLength) {
@@ -239,9 +244,8 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
         }
 
         if (mMask != null) {
-            Matrix matrix = new Matrix();//
+            Matrix matrix = new Matrix();
             matrix.translate(-mWaveOffset, mWaveLevel);
-
             canvas.concat(matrix);
             canvas.drawPixelMapHolder(new PixelMapHolder(mMask), 0, 0, mPaint);
         }
@@ -256,6 +260,11 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
     @Override
     public void setAlpha(int i) {
         mDrawable.setAlpha(i);
+    }
+
+    public void setColorFilter(ColorMatrix colorFilter) {
+        mCurFilter = colorFilter;
+        invalidateSelf();
     }
 
     @Override
@@ -277,23 +286,19 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
         return mIndeterminate;
     }
 
-    private void getInfiniteAnimator() {
+    private void createLoopAnimator() {
         mAnimatorInfinite = new AnimatorValue();
         mAnimatorInfinite.setLoopedCount(AnimatorValue.INFINITE);
         mAnimatorInfinite.setDuration(5000);
-        mAnimatorInfinite.setCurveType(LINEAR);
-        mAnimatorInfinite.setValueUpdateListener(new AnimatorValue.ValueUpdateListener() {
-            @Override
-            public void onUpdate(AnimatorValue animatorValue, float v) {
-                if (mRunning)
-                    invalidateSelf();
-            }
+        mAnimatorInfinite.setValueUpdateListener((animatorValue, v) -> {
+            if (mRunning)
+                invalidateSelf();
         });
         mAnimatorInfinite.start();
     }
 
     private AnimatorValue getDefaultAnimator() {
-        AnimatorValue animator = new AnimatorValue();//.ofFloat(0, 1);
+        AnimatorValue animator = new AnimatorValue();
         animator.setCurveType(DECELERATE);
         animator.setLoopedCount(AnimatorValue.INFINITE);
         animator.setDuration(5000);
@@ -302,7 +307,7 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
 
     private void setProgress(float progress) {
         mProgress = progress;
-        mWaveLevel = mHeight - (int) ((mHeight + mWaveHeight) * mProgress);
+        mWaveLevel = mHeight - (int)((mHeight + mWaveHeight) * mProgress);
         invalidateSelf();
     }
 
@@ -317,7 +322,7 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
             return;
         }
 
-        final int count = (int) Math.ceil((width + length) / (float) length);
+        final int count = (int) Math.ceil((width + length) / (float)length);
 
         PixelMap.InitializationOptions pi = new PixelMap.InitializationOptions();
         pi.pixelFormat = PixelFormat.ARGB_8888;
@@ -337,7 +342,7 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
         float y = -amplitude;
         for (int i = 0; i < count * 2; i++) {
             x += stepX;
-            path.quadTo(x, y, x + stepX, amplitude);
+            path.quadTo(x, y, x+stepX, amplitude);
             x += stepX;
             y = texture.getHeight() - y;
         }
@@ -364,6 +369,15 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
         updateBounds(element.getBounds());
     }
 
+    public WaveDrawable attachComponent(Component component) {
+        component.addDrawTask(this);
+        mComponent = component;
+        setBounds(0, 0, component.getWidth(), component.getHeight());
+        mComponent.setLayoutRefreshedListener(component1 -> setBounds(0, 0, component1.getWidth(), component1.getHeight()));
+        createLoopAnimator();
+        return this;
+    }
+
     @Override
     public void onDraw(Component component, Canvas canvas) {
         drawToCanvas(canvas);
@@ -372,14 +386,5 @@ public class WaveDrawable extends PixelMapElement implements Animatable, Animato
     private void invalidateSelf() {
         if (mComponent != null)
             mComponent.invalidate();
-    }
-
-    public void setComponent(Component component) {
-        component.addDrawTask(this);
-        mComponent = component;
-        if(! (component instanceof Image)){
-            mDrawable.setBounds(0, 0, component.getWidth(), component.getHeight());
-        }
-        getInfiniteAnimator();
     }
 }

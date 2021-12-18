@@ -1,4 +1,5 @@
 apply plugin: 'com.huawei.ohos.library'
+apply plugin: 'com.huawei.ohos.decctest'
 //For instructions on signature configuration, see https://developer.harmonyos.com/en/docs/documentation/doc-guides/ide_debug_device-0000001053822404#section1112183053510
 ohos {
     compileSdkVersion 6
@@ -13,9 +14,15 @@ ohos {
             }
         }
     }
+    
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    testImplementation 'junit:junit:4.13.1'
+    testImplementation 'junit:junit:4.13'
+    ohosTestImplementation 'com.huawei.ohos.testkit:runner:1.0.0.200'
+
+}
+decc {
+    supportType = ['html','xml']
 }

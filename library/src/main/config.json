@@ -10,7 +10,7 @@
   "deviceConfig": {
   },
   "module": {
-    "package": "com.race604.drawable.wave",
+    "package": "com.race604.drawable",
     "deviceType": [
       "phone",
       "tablet",

@@ -3,12 +3,16 @@ package com.race604.waveloading;
 import com.race604.drawable.wave.WaveDrawable;
 import ohos.aafwk.ability.Ability;
 import ohos.aafwk.content.Intent;
+//import ohos.agp.animation.Animator;
+//import ohos.agp.animation.AnimatorValue;
 import ohos.agp.colors.RgbColor;
 import ohos.agp.components.Component;
 import ohos.agp.components.Image;
 import ohos.agp.components.RadioContainer;
 import ohos.agp.components.Slider;
 import ohos.agp.components.element.ShapeElement;
+
+//import static ohos.agp.animation.Animator.CurveType.BOUNCE;
 
 /**
  * MainAbility class
@@ -28,9 +32,8 @@ public class MainAbility extends Ability {
         super.setUIContent(ResourceTable.Layout_ability_main);
 
         mImageView = (Image) findComponentById(ResourceTable.Id_image);
-        mWaveDrawable = new WaveDrawable(getContext(), ResourceTable.Media_android_robot, mImageView);
+        mWaveDrawable = new WaveDrawable(getContext(), ResourceTable.Media_android_robot).attachComponent(mImageView);
         mImageView.setImageElement(mWaveDrawable);
-
 
         mLevelSlider = (Slider) findComponentById(ResourceTable.Id_level_seek);
         mLevelSlider.setValueChangedListener(new SimpleOnSliderChangeListener() {
@@ -65,31 +68,31 @@ public class MainAbility extends Ability {
         });
 
         mRadioGroup = (RadioContainer) findComponentById(ResourceTable.Id_modes);
-        mRadioGroup.setMarkChangedListener((radioContainer, i) -> {
-            int id = radioContainer.getComponentAt(i).getId();
-            switch (id) {
-                case ResourceTable.Id_rb_yes:
-                    setIndeterminateMode(true);
-                    break;
-                case ResourceTable.Id_rb_no:
-                    setIndeterminateMode(false);
-            }
-        });
+        mRadioGroup.setMarkChangedListener((radioContainer, i) -> setIndeterminateMode(i == 0));
 
         mRadioGroup.mark(1);
+        setIndeterminateMode(mRadioGroup.getMarkedButtonId() == ResourceTable.Id_rb_yes);
 
-        Image imageView = (Image) findComponentById(ResourceTable.Id_image2);
-        WaveDrawable chromeWave = new WaveDrawable(this, ResourceTable.Media_chrome_logo, imageView);
-        imageView.setImageElement(chromeWave);
-        chromeWave.setComponent(imageView);
+        Image imageView2 = (Image) findComponentById(ResourceTable.Id_image2);
+        WaveDrawable chromeWave = new WaveDrawable(getContext(), ResourceTable.Media_chrome_logo).attachComponent(imageView2);
         chromeWave.setIndeterminate(true);
-        Component component = findComponentById(ResourceTable.Id_view);
-        int color = getColor(ResourceTable.Color_colorPrimaryDark);
+        imageView2.setImageElement(chromeWave);
+
+        // Set customised animator here
+//        AnimatorValue animator = new AnimatorValue();
+//        animator.setLoopedCount(Animator.INFINITE);
+//        animator.setDuration(4000);
+//        animator.setCurveType(BOUNCE);
+//        chromeWave.setIndeterminateAnimator(animator);
+//        chromeWave.setIndeterminate(true);
+
+        Component component = findComponentById(ResourceTable.Id_component);
+        int color = getColor(ResourceTable.Color_colorAccent);
         ShapeElement shapeElement = new ShapeElement();
         shapeElement.setRgbColor(RgbColor.fromRgbaInt(color));
         shapeElement.setBounds(0, 0, 100, 100);
-        WaveDrawable colorWave = new WaveDrawable(shapeElement, component);
-        component.setBackground(shapeElement);
+        WaveDrawable colorWave = new WaveDrawable(shapeElement).attachComponent(component);
+        component.setBackground(colorWave);
         colorWave.setIndeterminate(true);
     }
 
@@ -105,7 +108,7 @@ public class MainAbility extends Ability {
         mWaveDrawable.setWaveSpeed(mSpeedSlider.getProgress());
     }
 
-    private static class SimpleOnSliderChangeListener implements Slider.ValueChangedListener {
+    private static class SimpleOnSliderChangeListener implements Slider.ValueChangedListener{
         @Override
         public void onProgressUpdated(Slider slider, int i, boolean b) {
 

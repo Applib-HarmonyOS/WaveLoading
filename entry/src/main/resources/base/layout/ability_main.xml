@@ -2,138 +2,137 @@
 <DirectionalLayout
     xmlns:ohos="http://schemas.huawei.com/res/ohos"
     ohos:id="$+id:ability_main"
-    ohos:width="match_parent"
     ohos:height="match_parent"
+    ohos:width="match_parent"
     ohos:alignment="horizontal_center"
-    ohos:orientation="vertical"
-    ohos:bottom_padding="$float:ability_vertical_margin"
-    ohos:start_padding="$float:ability_horizontal_margin"
+    ohos:bottom_padding="center_horizontal"
     ohos:end_padding="$float:ability_horizontal_margin"
-    ohos:top_padding="$float:ability_vertical_margin">
+    ohos:orientation="vertical"
+    ohos:start_padding="$float:ability_vertical_margin"
+    ohos:top_padding="center_horizontal">
 
     <Image
         ohos:id="$+id:image"
-        ohos:width="match_content"
-        ohos:height="match_content"/>
+        ohos:height="match_content"
+        ohos:width="match_content"/>
 
     <DirectionalLayout
-        ohos:width="match_parent"
         ohos:height="match_content"
-        ohos:top_margin="8vp"
+        ohos:width="match_parent"
         ohos:alignment="vertical_center"
-        ohos:orientation="horizontal">
+        ohos:orientation="horizontal"
+        ohos:top_margin="8vp">
 
         <Text
-            ohos:width="match_content"
             ohos:height="match_content"
+            ohos:width="match_content"
             ohos:text="$string:label_indeterminate"/>
 
         <RadioContainer
             ohos:id="$+id:modes"
-            ohos:width="match_content"
             ohos:height="match_content"
+            ohos:width="match_content"
             ohos:orientation="horizontal">
 
             <RadioButton
                 ohos:id="$+id:rb_yes"
-                ohos:width="match_content"
                 ohos:height="match_content"
+                ohos:width="match_content"
                 ohos:text="$string:yes"/>
 
             <RadioButton
                 ohos:id="$+id:rb_no"
-                ohos:width="match_content"
                 ohos:height="match_content"
+                ohos:width="match_content"
                 ohos:text="$string:no"/>
         </RadioContainer>
     </DirectionalLayout>
 
     <DirectionalLayout
-        ohos:width="match_parent"
         ohos:height="match_content"
-        ohos:top_margin="8vp"
-        ohos:orientation="horizontal">
+        ohos:width="match_parent"
+        ohos:orientation="horizontal"
+        ohos:top_margin="8vp">
 
         <Text
-            ohos:width="65vp"
             ohos:height="match_content"
+            ohos:width="65vp"
             ohos:text="$string:label_level"/>
 
         <Slider
             ohos:id="$+id:level_seek"
-            ohos:width="match_parent"
             ohos:height="match_content"
-            ohos:progress="4000"
-            ohos:max="10000"/>
+            ohos:width="match_parent"
+            ohos:max="10000"
+            ohos:progress="4000"/>
     </DirectionalLayout>
 
     <DirectionalLayout
-        ohos:width="match_parent"
         ohos:height="match_content"
-        ohos:top_margin="8vp"
-        ohos:orientation="horizontal">
+        ohos:width="match_parent"
+        ohos:orientation="horizontal"
+        ohos:top_margin="8vp">
 
         <Text
-            ohos:width="65vp"
             ohos:height="match_content"
+            ohos:width="65vp"
             ohos:text="$string:label_amplitude"/>
 
         <Slider
             ohos:id="$+id:amplitude_seek"
-            ohos:width="match_parent"
             ohos:height="match_content"
-            ohos:progress="20"
-            ohos:max="100"/>
+            ohos:width="match_parent"
+            ohos:max="100"
+            ohos:progress="20"/>
     </DirectionalLayout>
 
     <DirectionalLayout
-        ohos:width="match_parent"
         ohos:height="match_content"
-        ohos:top_margin="8vp"
-        ohos:orientation="horizontal">
+        ohos:width="match_parent"
+        ohos:orientation="horizontal"
+        ohos:top_margin="8vp">
 
         <Text
-            ohos:width="65vp"
             ohos:height="match_content"
+            ohos:width="65vp"
             ohos:text="$string:label_length"/>
 
         <Slider
             ohos:id="$+id:length_seek"
-            ohos:width="match_parent"
             ohos:height="match_content"
-            ohos:progress="200"
-            ohos:max="600"/>
+            ohos:width="match_parent"
+            ohos:max="600"
+            ohos:progress="200"/>
     </DirectionalLayout>
 
     <DirectionalLayout
-        ohos:width="match_parent"
         ohos:height="match_content"
-        ohos:top_margin="8vp"
-        ohos:orientation="horizontal">
+        ohos:width="match_parent"
+        ohos:orientation="horizontal"
+        ohos:top_margin="8vp">
 
         <Text
-            ohos:width="65vp"
             ohos:height="match_content"
+            ohos:width="65vp"
             ohos:text="$string:label_speed"/>
 
         <Slider
             ohos:id="$+id:speed_seek"
-            ohos:width="match_parent"
             ohos:height="match_content"
-            ohos:progress="5"
-            ohos:max="50"/>
+            ohos:width="match_parent"
+            ohos:max="50"
+            ohos:progress="5"/>
     </DirectionalLayout>
 
     <Image
         ohos:id="$+id:image2"
-        ohos:width="match_content"
         ohos:height="match_content"
+        ohos:width="match_content"
         ohos:margin="8vp"/>
 
     <Component
-        ohos:id="$+id:view"
-        ohos:width="100vp"
+        ohos:id="$+id:component"
         ohos:height="100vp"
+        ohos:width="100vp"
         ohos:margin="8vp"/>
-
 </DirectionalLayout>
