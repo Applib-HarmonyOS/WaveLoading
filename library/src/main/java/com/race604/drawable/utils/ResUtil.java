@@ -66,7 +66,7 @@ public class ResUtil {
                 }
                 output.write(buffer, 0, readLen);
             } catch (IOException e) {
-                e.printStackTrace();
+                LogUtil.info("Exception", e.getMessage());
             }
         }
         return output.toByteArray();

@@ -111,17 +111,17 @@ public class MainAbility extends Ability {
     private static class SimpleOnSliderChangeListener implements Slider.ValueChangedListener{
         @Override
         public void onProgressUpdated(Slider slider, int i, boolean b) {
-
+            //nothing need to do onProgressUpdated
         }
 
         @Override
         public void onTouchStart(Slider slider) {
-
+            //nothing need to do onTouchStart
         }
 
         @Override
         public void onTouchEnd(Slider slider) {
-
+            //nothing need to do onTouchEnd
         }
     }
 }
