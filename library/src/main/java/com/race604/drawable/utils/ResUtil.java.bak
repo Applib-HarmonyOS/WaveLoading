@@ -77,7 +77,7 @@ public class ResUtil {
             try {
                 resource.close();
             } catch (IOException e) {
-                LogUtil.info("Exception", e.getMessage());
+                e.printStackTrace();
             }
         }
     }
