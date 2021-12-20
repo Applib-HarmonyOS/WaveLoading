@@ -32,7 +32,7 @@ public class MainAbility extends Ability {
         super.setUIContent(ResourceTable.Layout_ability_main);
 
         mImageView = (Image) findComponentById(ResourceTable.Id_image);
-        mWaveDrawable = new WaveDrawable(getContext(), ResourceTable.Media_android_robot).attachComponent(mImageView);
+        mWaveDrawable = new WaveDrawable(getContext(), ResourceTable.Media_harmony).attachComponent(mImageView);
         mImageView.setImageElement(mWaveDrawable);
 
         mLevelSlider = (Slider) findComponentById(ResourceTable.Id_level_seek);

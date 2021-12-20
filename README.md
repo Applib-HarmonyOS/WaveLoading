@@ -9,7 +9,7 @@ Create WaveDrawable Element with an Image or Image resource, and set it to compo
 
 ```Java
     mImageView = (Image) findComponentById(ResourceTable.Id_image);
-    mWaveDrawable = new WaveDrawable(getContext(), ResourceTable.Media_android_robot).attachComponent(mImageView);
+    mWaveDrawable = new WaveDrawable(getContext(), ResourceTable.Media_harmony).attachComponent(mImageView);
     mImageView.setImageElement(mWaveDrawable);
 ```
    
