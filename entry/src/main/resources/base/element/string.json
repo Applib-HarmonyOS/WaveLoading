@@ -1,0 +1,36 @@
+{
+  "string": [
+    {
+      "name": "entry_MainAbility",
+      "value": "WaveLoading"
+    },
+    {
+      "name": "label_indeterminate",
+      "value": "Indeterminate"
+    },
+    {
+      "name": "yes",
+      "value": "Yes"
+    },
+    {
+      "name": "no",
+      "value": "No"
+    },
+    {
+      "name": "label_level",
+      "value": "Level"
+    },
+    {
+      "name": "label_amplitude",
+      "value": "Amplitude"
+    },
+    {
+      "name": "label_speed",
+      "value": "Speed"
+    },
+    {
+      "name": "label_length",
+      "value": "Length"
+    }
+  ]
+}

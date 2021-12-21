@@ -1,96 +1,96 @@
 package com.race604.drawable.wave;
 
-import android.animation.ValueAnimator;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.drawable.Animatable;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.util.Log;
-import android.view.Choreographer;
-import android.view.animation.DecelerateInterpolator;
+import com.race604.drawable.utils.LogUtil;
+import ohos.agp.animation.AnimatorValue;
+import ohos.agp.components.Component;
+import ohos.agp.components.element.Element;
+import ohos.agp.components.element.PixelMapElement;
+import ohos.agp.render.BlendMode;
+import ohos.agp.render.Canvas;
+import ohos.agp.render.ColorMatrix;
+import ohos.agp.render.Paint;
+import ohos.agp.render.Path;
+import ohos.agp.render.PixelMapHolder;
+import ohos.agp.render.Texture;
+import ohos.agp.utils.Color;
+import ohos.agp.utils.Matrix;
+import ohos.agp.utils.Rect;
+import ohos.agp.utils.RectFloat;
+import ohos.app.Context;
+import ohos.media.image.PixelMap;
+import ohos.media.image.common.PixelFormat;
+import ohos.media.image.common.Size;
 
-import static android.content.ContentValues.TAG;
+import static com.race604.drawable.utils.ResUtil.createByResourceId;
+import static ohos.agp.animation.Animator.CurveType.DECELERATE;
 
 /**
  * Created by jing on 16-12-6.
  */
 
-public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.AnimatorUpdateListener {
-
+public class WaveDrawable extends PixelMapElement implements Animatable, AnimatorValue.ValueUpdateListener, Element.OnChangeListener, Component.DrawTask {
+    private static final String TAG = WaveDrawable.class.getSimpleName();
     private static final float WAVE_HEIGHT_FACTOR = 0.2f;
     private static final float WAVE_SPEED_FACTOR = 0.02f;
     private static final int UNDEFINED_VALUE = Integer.MIN_VALUE;
-    private Drawable mDrawable;
+    private final Element mDrawable;
     private int mWidth, mHeight;
     private int mWaveHeight = UNDEFINED_VALUE;
     private int mWaveLength = UNDEFINED_VALUE;
     private int mWaveStep = UNDEFINED_VALUE;
     private int mWaveOffset = 0;
-    private int mWaveLevel = 0;
-    private ValueAnimator mAnimator = null;
+    private int mWaveLevel = 10;
+    private AnimatorValue mAnimator = null;
+    private AnimatorValue mAnimatorInfinite = null;
     private float mProgress = 0.3f;
     private Paint mPaint;
-    private Bitmap mMask;
-    private Matrix mMatrix = new Matrix();
+    private PixelMap mMask;
+    private int mLevel = 0;
     private boolean mRunning = false;
     private boolean mIndeterminate = false;
+    private Component mComponent;
 
-    private static final PorterDuffXfermode sXfermode = new PorterDuffXfermode(PorterDuff.Mode.DST_IN);
-    private static ColorFilter sGrayFilter = new ColorMatrixColorFilter(new float[]{
+    private static ColorMatrix sGrayFilter = new ColorMatrix(new float[]{
             0.264F, 0.472F, 0.088F, 0, 0,
             0.264F, 0.472F, 0.088F, 0, 0,
             0.264F, 0.472F, 0.088F, 0, 0,
             0,      0,      0,      1, 0
     });
-    private ColorFilter mCurFilter = null;
+    private ColorMatrix mCurFilter = null;
 
-    private Choreographer.FrameCallback mFrameCallback = new Choreographer.FrameCallback() {
-        @Override
-        public void doFrame(long l) {
-            invalidateSelf();
-            if (mRunning) {
-                Choreographer.getInstance().postFrameCallback(this);
-            }
-        }
-    };
-
-    public WaveDrawable(Drawable drawable) {
-        init(drawable);
+    public WaveDrawable(PixelMap pixelmap) {
+        super(pixelmap);
+        mDrawable = new PixelMapElement(pixelmap);
+        init();
     }
 
     public WaveDrawable(Context context, int imgRes) {
-        Drawable drawable;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            drawable = context.getDrawable(imgRes);
-        } else {
-            drawable = context.getResources().getDrawable(imgRes);
-        }
-
-        init(drawable);
+        super(createByResourceId(context, imgRes));
+        mDrawable = new PixelMapElement(getPixelMap());
+        init();
     }
 
-    private void init(Drawable drawable) {
+    public WaveDrawable(Element drawable) {
+        super(createPixelMap(drawable));
         mDrawable = drawable;
-        mMatrix.reset();
+        init();
+    }
+
+    private static PixelMap createPixelMap(Element element) {
+        PixelMap.InitializationOptions pi = new PixelMap.InitializationOptions();
+        pi.pixelFormat = PixelFormat.ARGB_8888;
+        pi.size = new Size(element.getWidth(), element.getHeight());
+        return PixelMap.create(pi);
+    }
+
+    private void init() {
         mPaint = new Paint();
         mPaint.setFilterBitmap(false);
         mPaint.setColor(Color.BLACK);
-        mPaint.setXfermode(sXfermode);
+        mPaint.setBlendMode(BlendMode.DST_IN);
 
-        mWidth = mDrawable.getIntrinsicWidth();
-        mHeight = mDrawable.getIntrinsicHeight();
+        mWidth = mDrawable.getWidth();
+        mHeight = mDrawable.getHeight();
 
         if (mWidth > 0 && mHeight > 0) {
             mWaveLength = mWidth;
@@ -98,7 +98,6 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
             mWaveStep = Math.max(1, (int) (mWidth * WAVE_SPEED_FACTOR));
             updateMask(mWidth, mWaveLength, mWaveHeight);
         }
-
         setProgress(0);
         start();
     }
@@ -148,14 +147,21 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
             if (mAnimator == null) {
                 mAnimator = getDefaultAnimator();
             }
-            mAnimator.addUpdateListener(this);
+            mAnimator.setValueUpdateListener(this);
             mAnimator.start();
         } else {
             if (mAnimator != null) {
-                mAnimator.removeUpdateListener(this);
+                mAnimator.setValueUpdateListener(null);
                 mAnimator.cancel();
             }
             setLevel(calculateLevel());
+        }
+    }
+
+    public void setLevel(int level) {
+        if (mLevel != level) {
+            mLevel = level;
+            onLevelChange(mLevel);
         }
     }
 
@@ -163,19 +169,19 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
      * Set customised animator for wave loading animation
      * @param animator
      */
-    public void setIndeterminateAnimator(ValueAnimator animator) {
+    public void setIndeterminateAnimator(AnimatorValue animator) {
         if (mAnimator == animator) {
             return;
         }
 
         if (mAnimator != null) {
-            mAnimator.removeUpdateListener(this);
+            mAnimator.setValueUpdateListener(null);
             mAnimator.cancel();
         }
 
         mAnimator = animator;
         if (mAnimator != null) {
-            mAnimator.addUpdateListener(this);
+            mAnimator.setValueUpdateListener(this);
         }
     }
 
@@ -183,22 +189,18 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
     public void setBounds(int left, int top, int right, int bottom) {
         super.setBounds(left, top, right, bottom);
         mDrawable.setBounds(left, top, right, bottom);
-    }
-
-    @Override
-    protected void onBoundsChange(Rect bounds) {
-        super.onBoundsChange(bounds);
-        updateBounds(bounds);
+        updateBounds(new Rect(left, top, right, bottom));
     }
 
     private void updateBounds(Rect bounds) {
-        if (bounds.width() <= 0 || bounds.height() <= 0) {
+        if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0) {
             return;
         }
 
-        if (mWidth < 0 || mHeight < 0) {
-            mWidth = bounds.width();
-            mHeight = bounds.height();
+        if (mWidth > 0 || mHeight > 0) {
+            mWaveLength = mWidth;
+            mWidth = bounds.getWidth();
+            mHeight = bounds.getHeight();
             if (mWaveHeight == UNDEFINED_VALUE) {
                 mWaveHeight = Math.max(8, (int) (mHeight * WAVE_HEIGHT_FACTOR));
             }
@@ -210,44 +212,27 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
             if (mWaveStep == UNDEFINED_VALUE) {
                 mWaveStep = Math.max(1, (int) (mWidth * WAVE_SPEED_FACTOR));
             }
-
             updateMask(mWidth, mWaveLength, mWaveHeight);
         }
     }
 
     @Override
-    public int getIntrinsicHeight() {
-        return mHeight;
-    }
-
-    @Override
-    public int getIntrinsicWidth() {
-        return mWidth;
-    }
-
-    @Override
-    public void draw(Canvas canvas) {
-
-        mDrawable.setColorFilter(sGrayFilter);
-        mDrawable.draw(canvas);
-        mDrawable.setColorFilter(mCurFilter);
+    public void drawToCanvas(Canvas canvas) {
+        mDrawable.setColorMatrix(sGrayFilter);
+        mDrawable.drawToCanvas(canvas);
+        mDrawable.setColorMatrix(null);
 
         if (mProgress <= 0.001f) {
             return;
         }
 
-        int sc = canvas.saveLayer(0, 0, mWidth, mHeight, null,
-                Canvas.MATRIX_SAVE_FLAG |
-                Canvas.CLIP_SAVE_FLAG |
-                Canvas.HAS_ALPHA_LAYER_SAVE_FLAG |
-                Canvas.FULL_COLOR_LAYER_SAVE_FLAG |
-                Canvas.CLIP_TO_LAYER_SAVE_FLAG);
+        int sc = canvas.saveLayer(new RectFloat(0, 0, mWidth, mHeight), new Paint());
 
         if (mWaveLevel > 0) {
             canvas.clipRect(0, mWaveLevel, mWidth, mHeight);
         }
 
-        mDrawable.draw(canvas);
+        mDrawable.drawToCanvas(canvas);
 
         if (mProgress >= 0.999f) {
             return;
@@ -259,17 +244,17 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
         }
 
         if (mMask != null) {
-            mMatrix.setTranslate(-mWaveOffset, mWaveLevel);
-            canvas.drawBitmap(mMask, mMatrix, mPaint);
+            Matrix matrix = new Matrix();
+            matrix.translate(-mWaveOffset, mWaveLevel);
+            canvas.concat(matrix);
+            canvas.drawPixelMapHolder(new PixelMapHolder(mMask), 0, 0, mPaint);
         }
 
         canvas.restoreToCount(sc);
     }
 
-    @Override
-    protected boolean onLevelChange(int level) {
+    void onLevelChange(int level) {
         setProgress(level / 10000f);
-        return true;
     }
 
     @Override
@@ -277,27 +262,19 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
         mDrawable.setAlpha(i);
     }
 
-    @Override
-    public void setColorFilter(ColorFilter colorFilter) {
+    public void setColorFilter(ColorMatrix colorFilter) {
         mCurFilter = colorFilter;
         invalidateSelf();
     }
 
     @Override
-    public int getOpacity() {
-        return PixelFormat.TRANSLUCENT;
-    }
-
-    @Override
     public void start() {
         mRunning = true;
-        Choreographer.getInstance().postFrameCallback(mFrameCallback);
     }
 
     @Override
     public void stop() {
         mRunning = false;
-        Choreographer.getInstance().removeFrameCallback(mFrameCallback);
     }
 
     @Override
@@ -305,25 +282,25 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
         return mRunning;
     }
 
-    @Override
-    public void onAnimationUpdate(ValueAnimator animation) {
-        if (mIndeterminate) {
-            setProgress(animation.getAnimatedFraction());
-            if (!mRunning) {
-                invalidateSelf();
-            }
-        }
-    }
-
     public boolean isIndeterminate() {
         return mIndeterminate;
     }
 
-    private ValueAnimator getDefaultAnimator() {
-        ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
-        animator.setInterpolator(new DecelerateInterpolator());
-        animator.setRepeatMode(ValueAnimator.RESTART);
-        animator.setRepeatCount(ValueAnimator.INFINITE);
+    private void createLoopAnimator() {
+        mAnimatorInfinite = new AnimatorValue();
+        mAnimatorInfinite.setLoopedCount(AnimatorValue.INFINITE);
+        mAnimatorInfinite.setDuration(5000);
+        mAnimatorInfinite.setValueUpdateListener((animatorValue, v) -> {
+            if (mRunning)
+                invalidateSelf();
+        });
+        mAnimatorInfinite.start();
+    }
+
+    private AnimatorValue getDefaultAnimator() {
+        AnimatorValue animator = new AnimatorValue();
+        animator.setCurveType(DECELERATE);
+        animator.setLoopedCount(AnimatorValue.INFINITE);
         animator.setDuration(5000);
         return animator;
     }
@@ -340,17 +317,21 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
 
     private void updateMask(int width, int length, int height) {
         if (width <= 0 || length <= 0 || height <= 0) {
-            Log.w(TAG, "updateMask: size must > 0");
+            LogUtil.info(TAG, "updateMask: size must > 0");
             mMask = null;
             return;
         }
 
-
         final int count = (int) Math.ceil((width + length) / (float)length);
 
-        Bitmap bm = Bitmap.createBitmap(length * count, height, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bm);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        PixelMap.InitializationOptions pi = new PixelMap.InitializationOptions();
+        pi.pixelFormat = PixelFormat.ARGB_8888;
+        pi.size = new ohos.media.image.common.Size(length * count, height);
+        PixelMap bm = PixelMap.create(pi);
+        Texture texture = new Texture(bm);
+        Canvas c = new Canvas(texture);
+        Paint p = new Paint();
+        p.setAntiAlias(true);
 
         int amplitude = height / 2;
         Path path = new Path();
@@ -363,14 +344,47 @@ public class WaveDrawable extends Drawable implements Animatable, ValueAnimator.
             x += stepX;
             path.quadTo(x, y, x+stepX, amplitude);
             x += stepX;
-            y = bm.getHeight() - y;
+            y = texture.getHeight() - y;
         }
-        path.lineTo(bm.getWidth(), height);
+        path.lineTo(texture.getWidth(), height);
         path.lineTo(0, height);
         path.close();
 
         c.drawPath(path, p);
+        mMask = texture.getPixelMap();
+    }
 
-        mMask = bm;
+    @Override
+    public void onUpdate(AnimatorValue animatorValue, float v) {
+        if (mIndeterminate) {
+            setProgress(v);
+            if (!mRunning) {
+                invalidateSelf();
+            }
+        }
+    }
+
+    @Override
+    public void onChange(Element element) {
+        updateBounds(element.getBounds());
+    }
+
+    public WaveDrawable attachComponent(Component component) {
+        component.addDrawTask(this);
+        mComponent = component;
+        setBounds(0, 0, component.getWidth(), component.getHeight());
+        mComponent.setLayoutRefreshedListener(component1 -> setBounds(0, 0, component1.getWidth(), component1.getHeight()));
+        createLoopAnimator();
+        return this;
+    }
+
+    @Override
+    public void onDraw(Component component, Canvas canvas) {
+        drawToCanvas(canvas);
+    }
+
+    private void invalidateSelf() {
+        if (mComponent != null)
+            mComponent.invalidate();
     }
 }

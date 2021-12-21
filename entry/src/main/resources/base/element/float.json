@@ -1,0 +1,12 @@
+{
+  "float": [
+    {
+      "name": "ability_horizontal_margin",
+      "value": "16vp"
+    },
+    {
+      "name": "ability_vertical_margin",
+      "value": "16vp"
+    }
+  ]
+}
